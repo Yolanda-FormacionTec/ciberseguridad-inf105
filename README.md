@@ -22,3 +22,10 @@ Repositorio oficial de materiales, laboratorios prácticos y plantillas de audit
 
 1. **Sin instalaciones:** Todos los laboratorios funcionan directamente en el navegador web o mediante hojas de cálculo estándar.
 2. **Tu Portfolio Profesional:** Puedes usar la estructura de este repositorio como plantilla para publicar tus propias auditorías y políticas de seguridad en tu perfil de GitHub y enlazarlo en tu CV o LinkedIn.
+3. ---
+
+## 📂 Recursos y Laboratorio Interactivo
+
+* 🚀 **[Abrir Laboratorio Interactivo SOC Nivel 1 (En el navegador)](https://platinometal2009-code.github.io/ciberseguridad-inf105/cyberlab_inf_105_laboratorio_de_ciberseguridad_portfolio_soc_nivel_1.html)**
+* 📊 **[Descargar Plantilla Excel: Análisis de Riesgos (Modelo A)](https://platinometal2009-code.github.io/ciberseguridad-inf105/Analisis-Riesgos-ModeloA.xlsx)**
+* 📄 **[Ver/Descargar Guía: Auditoría Inicial de Activos, Riesgos y Controles](https://platinometal2009-code.github.io/ciberseguridad-inf105/Auditor%C3%ADa_Inicial_Activos_Riesgos_Controles%20B%C3%A1sicos_Instrucciones.pdf)**
