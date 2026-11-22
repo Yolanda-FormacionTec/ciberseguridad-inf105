@@ -29,3 +29,4 @@ Repositorio oficial de materiales, laboratorios prácticos y plantillas de audit
 * 🚀 **[Abrir Laboratorio Interactivo SOC Nivel 1 (En el navegador)](https://platinometal2009-code.github.io/ciberseguridad-inf105/cyberlab_inf_105_laboratorio_de_ciberseguridad_portfolio_soc_nivel_1.html)**
 * 📊 **[Descargar Plantilla Excel: Análisis de Riesgos (Modelo A)](https://platinometal2009-code.github.io/ciberseguridad-inf105/Analisis-Riesgos-ModeloA.xlsx)**
 * 📄 **[Ver/Descargar Guía: Auditoría Inicial de Activos, Riesgos y Controles](https://platinometal2009-code.github.io/ciberseguridad-inf105/Auditor%C3%ADa_Inicial_Activos_Riesgos_Controles%20B%C3%A1sicos_Instrucciones.pdf)**
+* * 📱 **[Laboratorio externo: Simulador de Administración Microsoft Intune](https://www.tiagoscarvalho.com/labs/intune-admin-lab/index.html)** *(Recurso externo de Tiago S. Carvalho)*
