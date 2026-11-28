@@ -1,1553 +1,183 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CyberLab INF-105 | Laboratorio de Ciberseguridad & Portfolio SOC Nivel 1</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            soc: {
-              bg: '#0f172a',
-              card: '#1e293b',
-              cardHover: '#263449',
-              border: '#334155',
-              cyan: '#06b6d4',
-              blue: '#3b82f6',
-              emerald: '#10b981',
-              amber: '#f59e0b',
-              rose: '#f43f5e'
-            }
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio SOC - Asistente de Scripts & Triaje PowerShell</title>
+    <style>
+        :root {
+            --bg: #0b1120;
+            --card: #1e293b;
+            --card-inner: #0f172a;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --code-bg: #020617;
         }
-      }
-    }
-  </script>
-  <style>
-    body {
-      background-color: #0f172a;
-      color: #f1f5f9;
-      background-image: 
-        radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%);
-    }
-    .cyber-grid {
-      background-size: 32px 32px;
-      background-image: linear-gradient(to right, rgba(51, 65, 85, 0.18) 1px, transparent 1px),
-                        linear-gradient(to bottom, rgba(51, 65, 85, 0.18) 1px, transparent 1px);
-    }
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
-    .tab-active {
-      border-bottom: 2px solid #06b6d4;
-      color: #22d3ee;
-      background: rgba(6, 182, 212, 0.08);
-    }
-    select, input[type="text"], input[type="url"], textarea {
-      color-scheme: dark;
-    }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col font-sans antialiased cyber-grid selection:bg-cyan-500/30 selection:text-cyan-200">
-
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- Top SOC Header -->
-  <header class="sticky top-0 z-40 bg-[#0f172a]/95 backdrop-blur-md border-b border-slate-800 shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; }
         
-        <!-- Brand & Module Title -->
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 shrink-0">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-            </svg>
-          </div>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="px-2 py-0.5 text-xs font-mono font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 rounded-md">INF-105</span>
-              <span class="text-xs font-mono text-slate-400">BLUE TEAM / SOC NIVEL 1</span>
-            </div>
-            <h1 class="text-lg sm:text-xl font-bold text-white tracking-tight">CyberLab <span class="text-cyan-400">|</span> Laboratorio & Portfolio Profesional</h1>
-          </div>
+        header {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+            padding-bottom: 20px; border-bottom: 1px solid #334155; margin-bottom: 25px; gap: 15px;
+        }
+        header h1 { color: var(--accent); margin: 0; font-size: 1.6rem; }
+        header p { color: var(--muted); margin: 4px 0 0 0; font-size: 0.95rem; }
+        .lab-badge {
+            background: rgba(56, 189, 248, 0.15); color: var(--accent); border: 1px solid var(--accent);
+            padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;
+        }
+
+        /* Navegación */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn {
+            background: var(--card); color: var(--text); border: 1px solid #334155;
+            padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;
+            transition: all 0.2s; flex: 1; text-align: center; min-width: 180px;
+        }
+        .tab-btn:hover { border-color: var(--accent); }
+        .tab-btn.active { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+
+        .panel { display: none; background: var(--card); padding: 25px; border-radius: 12px; border: 1px solid #334155; }
+        .panel.active { display: block; animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Bloques de código */
+        .code-box {
+            background: var(--code-bg); padding: 15px; border-radius: 8px;
+            font-family: 'Consolas', 'Courier New', monospace; color: #38bdf8; position: relative;
+            border: 1px solid #334155; margin: 10px 0; overflow-x: auto; font-size: 0.9rem;
+        }
+        .copy-btn {
+            position: absolute; top: 8px; right: 8px; background: #334155; color: white;
+            border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;
+        }
+        .copy-btn:hover { background: var(--accent); color: #000; font-weight: bold; }
+
+        /* Grid Constructor */
+        .builder-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 25px; }
+        @media (max-width: 850px) { .builder-grid { grid-template-columns: 1fr; } }
+        
+        .module-item {
+            background: var(--card-inner); padding: 12px; border-radius: 8px; margin-bottom: 10px;
+            border: 1px solid #334155; display: flex; align-items: flex-start; gap: 12px; cursor: pointer;
+        }
+        .module-item:hover { border-color: #475569; }
+        .module-item input { margin-top: 4px; transform: scale(1.2); cursor: pointer; }
+        
+        .explanation-line {
+            background: var(--card-inner); padding: 10px 14px; border-left: 4px solid var(--accent);
+            margin-bottom: 8px; border-radius: 0 6px 6px 0; font-size: 0.9rem;
+        }
+        .explanation-line code { color: #f472b6; font-family: 'Consolas', monospace; font-weight: bold; }
+
+        /* Pasos de ejecución */
+        .step { display: flex; gap: 15px; margin-bottom: 22px; align-items: flex-start; }
+        .step-num {
+            background: var(--accent); color: #0f172a; font-weight: bold; width: 32px; height: 32px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        /* Diccionario y Analizador */
+        .search-input, textarea {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569;
+            background: var(--card-inner); color: white; font-size: 0.95rem; margin-bottom: 15px;
+        }
+        textarea { font-family: 'Consolas', monospace; min-height: 160px; resize: vertical; }
+        
+        .help-card {
+            background: var(--card-inner); padding: 15px; border-radius: 8px; margin-bottom: 12px;
+            border: 1px solid #334155;
+        }
+        .badge { padding: 3px 9px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .badge-ok { background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.4); }
+        .badge-warn { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.4); }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.4); }
+
+        .btn-primary {
+            background: var(--success); color: #000; border: none; padding: 12px 20px;
+            border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem;
+            transition: opacity 0.2s;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-analyze { background: var(--accent); color: #000; }
+
+        /* Resultados del analizador */
+        .log-line { padding: 6px 10px; border-radius: 4px; margin-bottom: 4px; font-family: 'Consolas', monospace; font-size: 0.85rem; }
+        .log-ok { background: rgba(34, 197, 94, 0.12); border-left: 3px solid var(--success); }
+        .log-warn { background: rgba(245, 158, 11, 0.15); border-left: 3px solid var(--warning); }
+        .log-danger { background: rgba(239, 68, 68, 0.18); border-left: 3px solid var(--danger); }
+        .log-note { font-family: 'Segoe UI', sans-serif; font-size: 0.85rem; color: #e2e8f0; margin-top: 3px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>🛡️ Laboratorio SOC: Guía & Generador de Triaje PowerShell</h1>
+            <p>Herramienta interactiva para crear scripts, entender su sintaxis, ejecutarlos e interpretar evidencias.</p>
         </div>
+        <div class="lab-badge">MODO LABORATORIO OFFLINE</div>
+    </header>
 
-        <!-- Student Profile Inputs & Progress -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div class="flex flex-col sm:flex-row gap-2 bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-            <div class="relative">
-              <label for="student-name" class="sr-only">Nombre y Apellidos</label>
-              <input id="student-name" type="text" placeholder="Tu Nombre y Apellidos..." 
-                class="w-full sm:w-48 bg-slate-800/80 border border-slate-700 focus:border-cyan-500 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-400 outline-none transition" />
-            </div>
-            <div class="relative">
-              <label for="student-links" class="sr-only">Usuario GitHub o LinkedIn</label>
-              <input id="student-links" type="text" placeholder="github.com/usuario | LinkedIn" 
-                class="w-full sm:w-48 bg-slate-800/80 border border-slate-700 focus:border-cyan-500 rounded-lg px-3 py-1.5 text-xs font-mono text-cyan-300 placeholder-slate-400 outline-none transition" />
-            </div>
-          </div>
-
-          <!-- Global Progress Widget -->
-          <div class="bg-slate-900/90 px-3.5 py-2 rounded-xl border border-slate-800 flex items-center justify-between sm:justify-start gap-3 min-w-[175px]">
-            <div class="w-full">
-              <div class="flex items-center justify-between text-xs mb-1">
-                <span class="text-slate-400 font-medium">Progreso Labs</span>
-                <span id="progress-text" class="font-mono font-bold text-cyan-400">0/4</span>
-              </div>
-              <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all duration-500 rounded-full" style="width: 0%"></div>
-              </div>
-            </div>
-            <button onclick="resetAllProgress()" title="Reiniciar laboratorio" class="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Navigation Tabs -->
-      <nav class="mt-3 -mb-3 flex overflow-x-auto no-scrollbar gap-1 border-t border-slate-800/80 pt-1" aria-label="Pestañas de laboratorio">
-        <button onclick="switchTab('lab1')" id="tab-lab1" class="tab-btn tab-active flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg whitespace-nowrap transition">
-          <span id="badge-lab1" class="w-2 h-2 rounded-full bg-slate-600"></span>
-          <span>LAB 1 · Ecuación Riesgo & CID</span>
-          <span class="hidden md:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">LUNES</span>
-        </button>
-        <button onclick="switchTab('lab2')" id="tab-lab2" class="tab-btn text-slate-400 hover:text-slate-200 flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg whitespace-nowrap transition">
-          <span id="badge-lab2" class="w-2 h-2 rounded-full bg-slate-600"></span>
-          <span>LAB 2 · Identidad, Entropía & MFA</span>
-          <span class="hidden md:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">LUNES</span>
-        </button>
-        <button onclick="switchTab('lab3')" id="tab-lab3" class="tab-btn text-slate-400 hover:text-slate-200 flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg whitespace-nowrap transition">
-          <span id="badge-lab3" class="w-2 h-2 rounded-full bg-slate-600"></span>
-          <span>LAB 3 · Backups 3-2-1 & Hardening</span>
-          <span class="hidden md:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">MARTES</span>
-        </button>
-        <button onclick="switchTab('lab4')" id="tab-lab4" class="tab-btn text-slate-400 hover:text-slate-200 flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg whitespace-nowrap transition">
-          <span id="badge-lab4" class="w-2 h-2 rounded-full bg-slate-600"></span>
-          <span>LAB 4 · Auditoría Pyme (Pre-Excel)</span>
-          <span class="hidden md:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">MARTES</span>
-        </button>
-        <button onclick="switchTab('export')" id="tab-export" class="tab-btn ml-auto text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/30 flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-bold rounded-lg my-0.5 whitespace-nowrap transition">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          <span>EXPORTAR PORTFOLIO GITHUB</span>
-        </button>
-      </nav>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('tab1', this)">1. Crear & Explicar Script</button>
+        <button class="tab-btn" onclick="openTab('tab2', this)">2. Cómo Lanzarlo (Paso a Paso)</button>
+        <button class="tab-btn" onclick="openTab('tab3', this)">3. Help: Glosario de Resultados</button>
+        <button class="tab-btn" onclick="openTab('tab4', this)">4. Analizador Automático de Salida</button>
     </div>
-  </header>
 
-  <!-- Main Workspace -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-    <!-- =====================================================================
-         LAB 1: ECUACIÓN DEL RIESGO Y TRÍADA CID
-    ====================================================================== -->
-    <section id="panel-lab1" class="lab-panel space-y-6">
-      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xl">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-700/80 pb-4">
-          <div>
-            <div class="flex items-center gap-2 text-cyan-400 font-mono text-xs font-semibold mb-1">
-              <span>LUNES · BLOQUE 1.1</span>
-              <span>•</span>
-              <span>FUNDAMENTOS Y METODOLOGÍA MAGERIT / CCN-CERT</span>
-            </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-white">LAB 1: "Traductor Ejecutivo" — Ecuación del Riesgo y Tríada CID</h2>
-            <p class="text-sm text-slate-300 mt-1">Analiza los 4 incidentes reales de oficina y clasifica técnicamente cada elemento de la ecuación del riesgo (<code class="text-cyan-300 font-mono">Riesgo = Amenaza × Vulnerabilidad × Impacto</code>).</p>
-          </div>
-          <div class="flex items-center gap-3 shrink-0">
-            <div class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-center">
-              <div class="text-[11px] font-mono text-slate-400">PUNTUACIÓN LAB 1</div>
-              <div id="lab1-score-display" class="text-xl font-mono font-bold text-cyan-400">0 / 20</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Scenarios Grid -->
-        <div id="lab1-scenarios-container" class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
-          <!-- Rendered dynamically via JS -->
-        </div>
-
-        <!-- Validate Action -->
-        <div class="mt-6 pt-5 border-t border-slate-700/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p class="text-xs text-slate-400">Completa los 5 desplegables de cada escenario y pulsa validar para registrar tu diagnóstico en el portfolio.</p>
-          <button onclick="validateLab1()" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-cyan-500/20 transition flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span>Validar Diagnóstico (LAB 1)</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- =====================================================================
-         LAB 2: BLINDAJE DE IDENTIDAD, ENTROPÍA Y MFA
-    ====================================================================== -->
-    <section id="panel-lab2" class="lab-panel hidden space-y-6">
-      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xl">
-        <div class="border-b border-slate-700/80 pb-4">
-          <div class="flex items-center gap-2 text-cyan-400 font-mono text-xs font-semibold mb-1">
-            <span>LUNES · BLOQUE 1.2 Y 1.3</span>
-            <span>•</span>
-            <span>ZERO TRUST, AUTENTICACIÓN Y MÍNIMO PRIVILEGIO</span>
-          </div>
-          <h2 class="text-xl sm:text-2xl font-bold text-white">LAB 2: Blindaje de Identidad, Entropía y Control de Acceso</h2>
-          <p class="text-sm text-slate-300 mt-1">Evalúa la fortaleza criptográfica de credenciales y diseña la política corporativa de identidad para una pyme de 40 empleados siguiendo estándares NIST SP 800-63B y CCN-CERT.</p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-          
-          <!-- Left Column: Real-Time Entropy Analyzer -->
-          <div class="lg:col-span-5 bg-slate-900/90 border border-slate-700 rounded-2xl p-5 flex flex-col justify-between space-y-5">
+    <!-- PESTAÑA 1: CONSTRUCTOR -->
+    <div id="tab1" class="panel active">
+        <h2>🛠️ Paso 1: Construye el script y aprende qué hace cada instrucción</h2>
+        <p style="color: var(--muted);">Activa o desactiva los bloques de auditoría. El código fuente y la explicación técnica se actualizan al instante.</p>
+        
+        <div class="builder-grid">
             <div>
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="font-bold text-white flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
-                  Analizador de Entropía y Crackeo
-                </h3>
-                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-400 border border-slate-700">NIST 800-63B</span>
-              </div>
-              <p class="text-xs text-slate-400 mb-4">Prueba contraseñas tradicionales (ej. <code class="text-rose-400 font-mono">Empresa2026!</code>) frente a frases de paso o <em>passphrases</em> (ej. <code class="text-emerald-400 font-mono">cafe-montana-bicicleta-nube</code>).</p>
-              
-              <div class="relative">
-                <input id="pwd-input" type="text" oninput="analyzePassword()" placeholder="Escribe una contraseña o passphrase de prueba..." 
-                  class="w-full bg-slate-800 border border-slate-600 focus:border-cyan-400 rounded-xl px-4 py-3 font-mono text-sm text-white placeholder-slate-500 outline-none transition" />
-              </div>
-
-              <!-- Quick Preset Buttons -->
-              <div class="flex flex-wrap gap-1.5 mt-2.5">
-                <button type="button" onclick="setTestPwd('Admin1234')" class="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">Admin1234</button>
-                <button type="button" onclick="setTestPwd('Logistica2026!')" class="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">Logistica2026!</button>
-                <button type="button" onclick="setTestPwd('perro-azul-camion-ventana')" class="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 transition">Passphrase 4 palabras</button>
-              </div>
-
-              <!-- Metrics Grid -->
-              <div class="grid grid-cols-3 gap-2.5 mt-5">
-                <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-center">
-                  <div class="text-[10px] font-mono text-slate-400">LONGITUD</div>
-                  <div id="pwd-length" class="text-lg font-mono font-bold text-white mt-0.5">0 car.</div>
-                </div>
-                <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-center">
-                  <div class="text-[10px] font-mono text-slate-400">ENTROPÍA</div>
-                  <div id="pwd-entropy" class="text-lg font-mono font-bold text-cyan-400 mt-0.5">0 bits</div>
-                </div>
-                <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-center">
-                  <div class="text-[10px] font-mono text-slate-400">NIVEL</div>
-                  <div id="pwd-rating" class="text-sm font-mono font-bold text-slate-400 mt-1">—</div>
-                </div>
-              </div>
-
-              <!-- Crack Time Estimate -->
-              <div class="mt-3 bg-slate-800/60 border border-slate-700/80 rounded-xl p-3.5">
-                <div class="text-[11px] font-mono text-slate-400">TIEMPO ESTIMADO DE CRACKEO OFFLINE (GPU CLUSTER):</div>
-                <div id="pwd-cracktime" class="text-base font-mono font-bold text-amber-400 mt-1">Introduce una clave para calcular</div>
-              </div>
-
-              <!-- NIST Compliance Checks -->
-              <div class="mt-4 space-y-2 text-xs">
-                <div id="nist-len" class="flex items-center gap-2 text-slate-400">
-                  <span class="font-mono">[ ]</span> Longitud recomendada (≥ 14 caracteres / passphrase)
-                </div>
-                <div id="nist-dict" class="flex items-center gap-2 text-slate-400">
-                  <span class="font-mono">[ ]</span> Sin patrones predecibles (años, "admin", secuencias)
-                </div>
-                <div id="nist-entropy" class="flex items-center gap-2 text-slate-400">
-                  <span class="font-mono">[ ]</span> Entropía robusta (≥ 65 bits frente a fuerza bruta)
-                </div>
-              </div>
+                <h3>Bloques de Triaje disponibles:</h3>
+                <label class="module-item">
+                    <input type="checkbox" id="chk1" checked onchange="updateScript()">
+                    <div>
+                        <strong>1. Identidad, Grupos y Privilegios</strong><br>
+                        <small style="color: var(--muted);">Verifica el usuario actual, nivel de integridad y privilegios del token.</small>
+                    </div>
+                </label>
+                <label class="module-item">
+                    <input type="checkbox" id="chk2" checked onchange="updateScript()">
+                    <div>
+                        <strong>2. Procesos en Rutas No Estándar</strong><br>
+                        <small style="color: var(--muted);">Detecta binarios ejecutándose desde AppData, Temp o ProgramData.</small>
+                    </div>
+                </label>
+                <label class="module-item">
+                    <input type="checkbox" id="chk3" checked onchange="updateScript()">
+                    <div>
+                        <strong>3. Conexiones de Red Activas (C2 Check)</strong><br>
+                        <small style="color: var(--muted);">Lista conexiones TCP establecidas e identifica el proceso dueño.</small>
+                    </div>
+                </label>
+                <label class="module-item">
+                    <input type="checkbox" id="chk4" checked onchange="updateScript()">
+                    <div>
+                        <strong>4. Persistencia (Arranque y Tareas)</strong><br>
+                        <small style="color: var(--muted);">Revisa claves Run y tareas programadas no pertenecientes a Microsoft.</small>
+                    </div>
+                </label>
+                <label class="module-item">
+                    <input type="checkbox" id="chk5" checked onchange="updateScript()">
+                    <div>
+                        <strong>5. Auditoría de Inicios de Sesión</strong><br>
+                        <small style="color: var(--muted);">Extrae eventos ID 4624 del visor de seguridad (accesos físicos vs remotos).</small>
+                    </div>
+                </label>
+                <button class="btn-primary" onclick="downloadScript()">⬇️ Descargar script listo (triaje_lab.ps1)</button>
             </div>
 
-            <div class="bg-cyan-950/30 border border-cyan-500/30 rounded-xl p-3 text-xs text-cyan-200">
-              <strong>Nota técnica NIST:</strong> Obligar a cambiar contraseñas cada 30 días o exigir símbolos raros provoca que los usuarios apunten la clave en un post-it. La longitud (<em>passphrases</em>) + MFA vence a la complejidad artificial.
-            </div>
-          </div>
-
-          <!-- Right Column: Corporate Identity Policy Builder -->
-          <div class="lg:col-span-7 bg-slate-900/90 border border-slate-700 rounded-2xl p-5 flex flex-col justify-between space-y-5">
             <div>
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="font-bold text-white flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                  Constructor de Política de Identidad y Privilegios (Pyme 40 emp.)
-                </h3>
-                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30">ENTREGABLE PORTFOLIO</span>
-              </div>
-              <p class="text-xs text-slate-400 mb-4">Configura los parámetros técnicos que implantarías como analista junior para blindar los accesos de la empresa:</p>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">1. Longitud mínima de contraseña</label>
-                  <select id="pol-minlen" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-500">
-                    <option value="8">8 caracteres (Básico / Legado)</option>
-                    <option value="12">12 caracteres (Mínimo aceptable)</option>
-                    <option value="14" selected>14 caracteres o Passphrase de 4 palabras (Recomendado)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">2. Método MFA Principal</label>
-                  <select id="pol-mfa" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-500">
-                    <option value="sms">Código por SMS (Vulnerable a SIM Swapping)</option>
-                    <option value="totp" selected>App Autenticadora TOTP / Push con aprobación numérica</option>
-                    <option value="fido2">Llaves de seguridad FIDO2 / Passkeys (Resistente a Phishing)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">3. Política de Caducidad (NIST)</label>
-                  <select id="pol-rotation" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-500">
-                    <option value="30d">Cambio obligatorio cada 30 días (Obsoleto)</option>
-                    <option value="breach" selected>Sin caducidad periódica; cambio inmediato ante sospecha o brecha</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold text-slate-300 mb-1.5">4. Bloqueo ante Fuerza Bruta</label>
-                  <select id="pol-lockout" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-500">
-                    <option value="none">Sin bloqueo de intentos</option>
-                    <option value="5att" selected>Bloqueo temporal (15 min) tras 5 intentos fallidos + alerta SOC</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Privilege & Zero Trust Checkboxes -->
-              <div class="mt-5 space-y-2.5">
-                <label class="block text-xs font-semibold text-slate-300">5. Controles de Mínimo Privilegio y Zero Trust activos:</label>
-                
-                <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-800/70 border border-slate-700/80 hover:border-slate-600 cursor-pointer transition">
-                  <input id="pol-noadmin" type="checkbox" checked class="mt-0.5 rounded bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-500" />
-                  <div class="text-xs">
-                    <span class="font-semibold text-white">Separación de cuentas (Usuario Estándar vs. Administrador):</span>
-                    <span class="text-slate-400 block">Ningún empleado trabaja a diario con privilegios de Administrador Local en Windows.</span>
-                  </div>
-                </label>
-
-                <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-800/70 border border-slate-700/80 hover:border-slate-600 cursor-pointer transition">
-                  <input id="pol-pwdmgr" type="checkbox" checked class="mt-0.5 rounded bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-500" />
-                  <div class="text-xs">
-                    <span class="font-semibold text-white">Gestor de Contraseñas Corporativo + Prohibición de reutilización:</span>
-                    <span class="text-slate-400 block">Credenciales únicas por servicio y verificación contra bases de datos filtradas.</span>
-                  </div>
-                </label>
-
-                <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-800/70 border border-slate-700/80 hover:border-slate-600 cursor-pointer transition">
-                  <input id="pol-offboarding" type="checkbox" checked class="mt-0.5 rounded bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-500" />
-                  <div class="text-xs">
-                    <span class="font-semibold text-white">Procedimiento de Baja Inmediata (Offboarding):</span>
-                    <span class="text-slate-400 block">Revocación de sesiones, tokens y cuentas en menos de 1 hora tras la salida de un empleado.</span>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div class="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div id="lab2-feedback" class="text-xs text-slate-400">Configura la política y guarda tu estándar en el portfolio.</div>
-              <button onclick="saveLab2()" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-cyan-500/20 transition">
-                Guardar Política de Identidad (LAB 2)
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- =====================================================================
-         LAB 3: HIGIENE DIGITAL, BACKUPS 3-2-1 Y BASTIONADO (HARDENING)
-    ====================================================================== -->
-    <section id="panel-lab3" class="lab-panel hidden space-y-6">
-      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xl">
-        <div class="border-b border-slate-700/80 pb-4">
-          <div class="flex items-center gap-2 text-cyan-400 font-mono text-xs font-semibold mb-1">
-            <span>MARTES · BLOQUE 2.1 Y 2.2</span>
-            <span>•</span>
-            <span>RESILIENCIA ANTE RANSOMWARE Y GUÍAS CCN-CERT</span>
-          </div>
-          <h2 class="text-xl sm:text-2xl font-bold text-white">LAB 3: Arquitectura Backup 3-2-1-1-0 y Checklist de Bastionado</h2>
-          <p class="text-sm text-slate-300 mt-1">Simula si la empresa sobreviviría a un ataque de ransomware cifrando la red y selecciona las medidas de bastionado para puestos, móviles y redes.</p>
-        </div>
-
-        <!-- Part A: Ransomware Backup Simulator -->
-        <div class="mt-6 bg-slate-900/90 border border-slate-700 rounded-2xl p-5">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-            <div>
-              <h3 class="font-bold text-white flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                Simulador de Supervivencia ante Ransomware (Regla 3-2-1-1-0)
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Selecciona los pilares que tiene configurados la infraestructura de copias de seguridad y lanza la simulación de ataque:</p>
-            </div>
-            <button onclick="simulateRansomware()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-rose-600/20 transition flex items-center gap-2 shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-              <span>Simular Ataque Ransomware</span>
-            </button>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            <label class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-cyan-500/50 cursor-pointer transition flex flex-col justify-between gap-2">
-              <div class="flex items-center justify-between">
-                <span class="font-mono font-bold text-cyan-400 text-sm">3 COPIAS</span>
-                <input id="bk-3" type="checkbox" checked class="rounded bg-slate-700 border-slate-600 text-cyan-500" />
-              </div>
-              <p class="text-[11px] text-slate-300">Dato original en producción + al menos 2 copias de respaldo.</p>
-            </label>
-
-            <label class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-cyan-500/50 cursor-pointer transition flex flex-col justify-between gap-2">
-              <div class="flex items-center justify-between">
-                <span class="font-mono font-bold text-cyan-400 text-sm">2 SOPORTES</span>
-                <input id="bk-2" type="checkbox" checked class="rounded bg-slate-700 border-slate-600 text-cyan-500" />
-              </div>
-              <p class="text-[11px] text-slate-300">Almacenamiento en 2 tecnologías o medios distintos (ej. NAS + Nube/Cinta).</p>
-            </label>
-
-            <label class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-cyan-500/50 cursor-pointer transition flex flex-col justify-between gap-2">
-              <div class="flex items-center justify-between">
-                <span class="font-mono font-bold text-cyan-400 text-sm">1 EXTERNA</span>
-                <input id="bk-1offsite" type="checkbox" checked class="rounded bg-slate-700 border-slate-600 text-cyan-500" />
-              </div>
-              <p class="text-[11px] text-slate-300">1 copia fuera de la oficina física (protección ante incendio o robo).</p>
-            </label>
-
-            <label class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-cyan-500/50 cursor-pointer transition flex flex-col justify-between gap-2">
-              <div class="flex items-center justify-between">
-                <span class="font-mono font-bold text-amber-400 text-sm">1 AISLADA / INMUTABLE</span>
-                <input id="bk-1airgap" type="checkbox" class="rounded bg-slate-700 border-slate-600 text-cyan-500" />
-              </div>
-              <p class="text-[11px] text-slate-300">Desconectada de la red (Air-Gap) o inmutable (WORM) frente a cifrado remoto.</p>
-            </label>
-
-            <label class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-cyan-500/50 cursor-pointer transition flex flex-col justify-between gap-2">
-              <div class="flex items-center justify-between">
-                <span class="font-mono font-bold text-emerald-400 text-sm">0 ERRORES (TEST)</span>
-                <input id="bk-0err" type="checkbox" class="rounded bg-slate-700 border-slate-600 text-cyan-500" />
-              </div>
-              <p class="text-[11px] text-slate-300">Pruebas periódicas de restauración verificadas y copias cifradas en reposo.</p>
-            </label>
-          </div>
-
-          <!-- Simulation Result Banner -->
-          <div id="ransomware-result" class="mt-4 hidden rounded-xl p-4 border text-xs sm:text-sm"></div>
-        </div>
-
-        <!-- Part B: Hardening Checklist (CCN-CERT) -->
-        <div class="mt-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-            <h3 class="font-bold text-white flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-              Checklist de Bastionado Técnico (Guías CCN-CERT BP)
-            </h3>
-            <span id="hardening-counter" class="text-xs font-mono text-cyan-400 bg-slate-900 px-3 py-1 rounded-lg border border-slate-700">0 / 12 controles marcados</span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="hardening-grid">
-            <!-- Rendered via JS -->
-          </div>
-        </div>
-
-        <div class="mt-6 pt-5 border-t border-slate-700/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p class="text-xs text-slate-400">Completa la simulación de respaldo y marca al menos 9 controles de bastionado para validar el laboratorio.</p>
-          <button onclick="saveLab3()" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-cyan-500/20 transition">
-            Registrar Bastionado en Portfolio (LAB 3)
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- =====================================================================
-         LAB 4: AUDITORÍA INICIAL "TRANSPORTE Y LOGÍSTICA SUR S.L."
-    ====================================================================== -->
-    <section id="panel-lab4" class="lab-panel hidden space-y-6">
-      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xl">
-        <div class="border-b border-slate-700/80 pb-4">
-          <div class="flex items-center gap-2 text-cyan-400 font-mono text-xs font-semibold mb-1">
-            <span>MARTES · BLOQUE 2.3 (PROYECTO EVALUABLE)</span>
-            <span>•</span>
-            <span>PREPARACIÓN MATRIZ DE RIESGOS MODELO A</span>
-          </div>
-          <h2 class="text-xl sm:text-2xl font-bold text-white">LAB 4: Auditoría Inicial "Transporte y Logística Sur S.L."</h2>
-          <p class="text-sm text-slate-300 mt-1">Evalúa los 3 activos críticos de la empresa (38 empleados), calcula su nivel de riesgo (<code class="text-cyan-300 font-mono">P × I</code>) y redacta una salvaguarda <strong>técnica</strong> y otra <strong>organizativa</strong> para trasladarlas directamente a tu Excel <code class="text-cyan-300 font-mono">Analisis-Riesgos-ModeloA.xlsx</code>.</p>
-        </div>
-
-        <!-- Assets Audit Cards -->
-        <div id="lab4-assets-container" class="space-y-6 mt-6">
-          <!-- Rendered via JS -->
-        </div>
-
-        <div class="mt-6 pt-5 border-t border-slate-700/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p class="text-xs text-slate-400">Al guardar este laboratorio, toda la matriz de riesgos y salvaguardas se integrará automáticamente en tu <strong>README.md</strong>.</p>
-          <button onclick="saveLab4()" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span>Completar Auditoría y Generar Portfolio (LAB 4)</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- =====================================================================
-         TAB 5: EXPORTAR PORTFOLIO GITHUB READY
-    ====================================================================== -->
-    <section id="panel-export" class="lab-panel hidden space-y-6">
-      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-xl">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-700/80 pb-5">
-          <div>
-            <div class="flex items-center gap-2 text-emerald-400 font-mono text-xs font-semibold mb-1">
-              <span>GITHUB PORTFOLIO GENERATOR</span>
-              <span>•</span>
-              <span>LISTO PARA ENTREVISTAS TÉCNICAS</span>
-            </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-white">Exportar Evidencias para Repositorio GitHub</h2>
-            <p class="text-sm text-slate-300 mt-1">Tu documentación técnica generada dinámicamente en formato Markdown (<code class="text-emerald-300 font-mono">README.md</code>) para publicar junto con tu Excel de auditoría.</p>
-          </div>
-
-          <!-- Export Action Buttons -->
-          <div class="flex flex-wrap gap-2.5 shrink-0">
-            <button onclick="copyMarkdown()" class="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-cyan-500/20 transition flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/></svg>
-              <span>Copiar Markdown para GitHub</span>
-            </button>
-
-            <button onclick="downloadReadme()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-              <span>Descargar README.md</span>
-            </button>
-
-            <button onclick="downloadRepoGuide()" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-semibold text-xs sm:text-sm rounded-xl border border-slate-600 transition flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
-              <span>Descargar Guía Estructura Repo (.txt)</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Two Column Layout: Repo Guide + Live Markdown Code -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-          
-          <!-- Left: Recruiter Impact & Folder Tree -->
-          <div class="lg:col-span-4 space-y-4">
-            <div class="bg-slate-900/90 border border-slate-700 rounded-2xl p-4">
-              <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                <span class="text-cyan-400">📁</span> Estructura de tu Repositorio GitHub
-              </h3>
-              <pre class="text-xs font-mono text-slate-300 bg-slate-950 p-3.5 rounded-xl border border-slate-800 overflow-x-auto leading-relaxed">ciberseguridad-portfolio-inf105/
-├── README.md  <span class="text-emerald-400">← (Este archivo)</span>
-├── 01-auditoria-riesgos-pyme/
-│   └── Analisis-Riesgos-ModeloA.xlsx
-├── 02-identidad-zero-trust/
-│   └── Politica-Contrasenas-MFA.md
-└── 03-bastionado-ccn-cert/
-    └── Checklist-Hardening.md</pre>
-            </div>
-
-            <div class="bg-blue-950/30 border border-blue-500/30 rounded-2xl p-4 text-xs text-slate-300 space-y-2">
-              <h4 class="font-bold text-blue-300 text-sm">💡 Consejo para tu entrevista SOC / IT:</h4>
-              <p>Cuando un reclutador técnico abra tu enlace de GitHub desde tu CV o LinkedIn, lo primero que leerá es el <code class="text-cyan-300 font-mono">README.md</code>.</p>
-              <p>Asegúrate de haber completado los <strong>4 laboratorios</strong> y de escribir tu <strong>nombre real</strong> en la cabecera superior antes de descargar el archivo para que las insignias y tablas reflejen tu trabajo completo.</p>
-            </div>
-          </div>
-
-          <!-- Right: Live Markdown Output -->
-          <div class="lg:col-span-8 bg-slate-950 border border-slate-700 rounded-2xl overflow-hidden flex flex-col">
-            <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
-                <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
-                <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
-                <span class="ml-2 text-xs font-mono text-slate-400">README.md — Vista previa en tiempo real</span>
-              </div>
-              <span id="md-char-count" class="text-[11px] font-mono text-slate-500">0 caracteres</span>
-            </div>
-            <textarea id="markdown-output" readonly class="w-full h-[520px] bg-slate-950 text-slate-200 font-mono text-xs p-4 outline-none resize-none leading-relaxed"></textarea>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Discrete Teaching Credits Footer -->
-  <footer class="mt-auto border-t border-slate-800/90 bg-[#0b1120] py-4 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
-      <p class="text-center sm:text-left">
-        Material didáctico diseñado por <strong class="text-slate-200 font-semibold">Yolanda Seisdedos Chapí</strong> – Especialista en Educación Digital Docente de FPE & Innovación TIC | Módulo INF-105
-      </p>
-      <div class="flex items-center gap-3 font-mono text-[11px] text-slate-500">
-        <span>CCN-CERT / NIST / MAGERIT</span>
-        <span>•</span>
-        <span class="text-emerald-500/80">LocalStorage Activo</span>
-      </div>
-    </div>
-  </footer>
-
-  <!-- =====================================================================
-       APPLICATION LOGIC (JAVASCRIPT)
-  ====================================================================== -->
-  <script>
-    // -----------------------------------------------------------------------
-    // 1. DATA DEFINITIONS
-    // -----------------------------------------------------------------------
-    const lab1Scenarios = [
-      {
-        id: 's1',
-        title: 'Escenario 1: Pendrive perdido en cafetería',
-        desc: 'Un comercial pierde en el tren una memoria USB sin cifrar que contenía el listado completo de clientes, NIF y condiciones comerciales.',
-        correct: {
-          asset: 'Soporte extraíble / Datos de clientes',
-          cia: 'Confidencialidad',
-          vuln: 'Ausencia de cifrado en soporte portátil',
-          threat: 'Pérdida o robo de dispositivo físico',
-          control: 'Preventivo'
-        },
-        explanation: 'Al no estar cifrado (BitLocker To Go), cualquiera que encuentre el USB accede a datos confidenciales. El cifrado actúa como control preventivo.'
-      },
-      {
-        id: 's2',
-        title: 'Escenario 2: Apagón eléctrico en el servidor ERP',
-        desc: 'Una tormenta provoca un corte de luz de 2 horas. El servidor local de facturación no tiene SAI (UPS) y toda la oficina queda paralizada sin poder emitir albaranes.',
-        correct: {
-          asset: 'Servidor ERP de facturación',
-          cia: 'Disponibilidad',
-          vuln: 'Falta de sistema de alimentación ininterrumpida (SAI)',
-          threat: 'Corte de suministro eléctrico',
-          control: 'Preventivo'
-        },
-        explanation: 'El sistema deja de estar accesible cuando se necesita (Disponibilidad). Un SAI/UPS previene la caída brusca del servicio.'
-      },
-      {
-        id: 's3',
-        title: 'Escenario 3: Alteración silenciosa de tarifas',
-        desc: 'Un usuario con permisos excesivos entra en la hoja maestra de precios y rebaja un 40% las tarifas de un proveedor amigo sin dejar rastro.',
-        correct: {
-          asset: 'Base de datos de tarifas',
-          cia: 'Integridad',
-          vuln: 'Falta de mínimo privilegio y registro de auditoría',
-          threat: 'Manipulación interna no autorizada',
-          control: 'Detectivo'
-        },
-        explanation: 'Los datos han sido modificados sin autorización (Integridad). Los logs de auditoría y alertas SIEM actúan como control detectivo.'
-      },
-      {
-        id: 's4',
-        title: 'Escenario 4: Acceso remoto de un ex-empleado',
-        desc: 'Dos semanas después de ser despedido, un antiguo administrativo entra desde su casa al correo corporativo porque su cuenta seguía activa y sin MFA.',
-        correct: {
-          asset: 'Cuenta de correo corporativo',
-          cia: 'Confidencialidad',
-          vuln: 'Falta de procedimiento de baja (Offboarding) y MFA',
-          threat: 'Acceso no autorizado con credenciales válidas',
-          control: 'Correctivo'
-        },
-        explanation: 'Revocar inmediatamente la cuenta, cerrar sesiones activas y rotar credenciales tras detectar el fallo es una acción correctiva de contención.'
-      }
-    ];
-
-    const lab1Options = {
-      asset: [
-        'Soporte extraíble / Datos de clientes',
-        'Servidor ERP de facturación',
-        'Base de datos de tarifas',
-        'Cuenta de correo corporativo'
-      ],
-      cia: ['Confidencialidad', 'Integridad', 'Disponibilidad'],
-      vuln: [
-        'Ausencia de cifrado en soporte portátil',
-        'Falta de sistema de alimentación ininterrumpida (SAI)',
-        'Falta de mínimo privilegio y registro de auditoría',
-        'Falta de procedimiento de baja (Offboarding) y MFA'
-      ],
-      threat: [
-        'Pérdida o robo de dispositivo físico',
-        'Corte de suministro eléctrico',
-        'Manipulación interna no autorizada',
-        'Acceso no autorizado con credenciales válidas'
-      ],
-      control: ['Preventivo', 'Detectivo', 'Correctivo']
-    };
-
-    const hardeningCategories = [
-      {
-        id: 'a1',
-        title: 'A1 · Puestos de Trabajo Windows',
-        badge: 'CCN-CERT BP-01',
-        color: 'cyan',
-        items: [
-          { id: 'h1', text: 'Activar actualizaciones automáticas de Windows y Office (gestión de parches).' },
-          { id: 'h2', text: 'Eliminar privilegios de Administrador Local en cuentas de uso diario.' },
-          { id: 'h3', text: 'Habilitar cifrado de disco completo con BitLocker + TPM.' },
-          { id: 'h4', text: 'Configurar bloqueo automático de pantalla tras 5 min y restringir USB.' }
-        ]
-      },
-      {
-        id: 'a2',
-        title: 'A2 · Movilidad Corporativa (Android/iOS)',
-        badge: 'CCN-CERT BP-03',
-        color: 'blue',
-        items: [
-          { id: 'h5', text: 'Exigir PIN robusto (mín. 6 dígitos) y autenticación biométrica.' },
-          { id: 'h6', text: 'Enrolar terminales en solución MDM con capacidad de borrado remoto.' },
-          { id: 'h7', text: 'Separar perfil de trabajo y personal (contenedores corporativos).' },
-          { id: 'h8', text: 'Bloquear instalación de aplicaciones fuera de tiendas oficiales (APK).' }
-        ]
-      },
-      {
-        id: 'a3',
-        title: 'A3 · Redes Wi-Fi y Acceso Remoto',
-        badge: 'CCN-CERT BP-11',
-        color: 'emerald',
-        items: [
-          { id: 'h9', text: 'Actualizar cifrado Wi-Fi a WPA3 / WPA2-Enterprise y rotar claves.' },
-          { id: 'h10', text: 'Segmentar red interna de administración frente a Wi-Fi de invitados/transportistas.' },
-          { id: 'h11', text: 'Imponer uso obligatorio de VPN corporativa cifrada en redes públicas.' },
-          { id: 'h12', text: 'Exigir MFA en todos los accesos remotos (VPN, correo web y ERP).' }
-        ]
-      }
-    ];
-
-    const lab4Assets = [
-      {
-        code: 'A1',
-        name: 'Ordenadores de Oficina (Windows)',
-        situation: 'Administración y tráfico guardan facturas, tarifas y datos de clientes. Llevan +7 meses sin actualizar SO ni Office, todos entran como Administrador y las copias van a una carpeta compartida en la misma red.',
-        defaultThreat: 'Difusión de software dañino (Ransomware) / Explotación de vulnerabilidades',
-        threats: [
-          'Difusión de software dañino (Ransomware) / Explotación de vulnerabilidades',
-          'Fuga de información por acceso no autorizado',
-          'Pérdida de disponibilidad por fallo hardware'
-        ],
-        helpTech: 'Configurar WSUS/Windows Update automático, migrar usuarios a cuentas Estándar, activar BitLocker y aislar copias de seguridad en soporte inmutable/offline (Regla 3-2-1).',
-        helpOrg: 'Aprobar una Política de Gestión de Parches mensual y una Norma de Uso Aceptable que prohíba instalar software sin autorización de TI.'
-      },
-      {
-        code: 'A2',
-        name: 'Móviles Corporativos (Jefes de Tráfico y Repartidores)',
-        situation: 'Contienen albaranes, correos y mensajes con clientes. Carecen de huella o PIN robusto, no están cifrados y no existe borrado remoto ante robo o pérdida en ruta.',
-        defaultThreat: 'Robo o extravío de dispositivo móvil con acceso a datos corporativos',
-        threats: [
-          'Robo o extravío de dispositivo móvil con acceso a datos corporativos',
-          'Infección por aplicaciones maliciosas',
-          'Interceptación de llamadas'
-        ],
-        helpTech: 'Implantar solución MDM (Mobile Device Management) para forzar PIN de 6 dígitos/biometría, cifrado completo del terminal y borrado remoto.',
-        helpOrg: 'Establecer un Protocolo de Notificación Inmediata de Pérdida/Robo (menos de 1 hora) y firma de compromiso de custodia al entregar el terminal.'
-      },
-      {
-        code: 'A3',
-        name: 'Conexión a Internet, Wi-Fi y Acceso Remoto',
-        situation: 'Una sola red Wi-Fi con WPA2-Personal y contraseña conocida por empleados, transportistas y visitas. Comerciales se conectan desde cafeterías y hoteles sin VPN ni MFA.',
-        defaultThreat: 'Suplantación de identidad y escucha de tráfico (Man-in-the-Middle)',
-        threats: [
-          'Suplantación de identidad y escucha de tráfico (Man-in-the-Middle)',
-          'Intrusión en red interna desde red Wi-Fi compartida',
-          'Denegación de servicio (DDoS)'
-        ],
-        helpTech: 'Crear VLAN separada para invitados/transportistas, migrar Wi-Fi interna a WPA3/WPA2-Enterprise, desplegar VPN corporativa cifrada y activar MFA obligatorio.',
-        helpOrg: 'Publicar una Norma de Teletrabajo y Movilidad que prohíba acceder a servicios internos desde redes públicas sin VPN activa y prohibir compartir claves Wi-Fi.'
-      }
-    ];
-
-    // -----------------------------------------------------------------------
-    // 2. APPLICATION STATE & STORAGE
-    // -----------------------------------------------------------------------
-    const STORAGE_KEY = 'cyberlab_inf105_state_v1';
-
-    let appState = {
-      studentName: '',
-      studentLinks: '',
-      activeTab: 'lab1',
-      completed: { lab1: false, lab2: false, lab3: false, lab4: false },
-      lab1: {
-        answers: { s1: {}, s2: {}, s3: {}, s4: {} },
-        score: 0
-      },
-      lab2: {
-        minLen: '14',
-        mfa: 'totp',
-        rotation: 'breach',
-        lockout: '5att',
-        noAdmin: true,
-        pwdMgr: true,
-        offboarding: true
-      },
-      lab3: {
-        backups: { bk3: true, bk2: true, bk1offsite: true, bk1airgap: false, bk0err: false },
-        ransomwareTested: false,
-        hardening: {}
-      },
-      lab4: {
-        A1: { threat: lab4Assets[0].defaultThreat, prob: 5, imp: 5, tech: '', org: '' },
-        A2: { threat: lab4Assets[1].defaultThreat, prob: 4, imp: 4, tech: '', org: '' },
-        A3: { threat: lab4Assets[2].defaultThreat, prob: 5, imp: 4, tech: '', org: '' }
-      }
-    };
-
-    function loadState() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          appState = {
-            ...appState,
-            ...parsed,
-            completed: { ...appState.completed, ...(parsed.completed || {}) },
-            lab1: { ...appState.lab1, ...(parsed.lab1 || {}) },
-            lab2: { ...appState.lab2, ...(parsed.lab2 || {}) },
-            lab3: { ...appState.lab3, ...(parsed.lab3 || {}) },
-            lab4: { ...appState.lab4, ...(parsed.lab4 || {}) }
-          };
-        }
-      } catch (e) {
-        console.warn('No se pudo cargar estado previo:', e);
-      }
-    }
-
-    function saveState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      } catch (e) {
-        console.warn('No se pudo guardar en localStorage:', e);
-      }
-      updateGlobalUI();
-      generateMarkdown();
-    }
-
-    function showToast(message, type = 'success') {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      const colors = type === 'success'
-        ? 'bg-emerald-950/95 border-emerald-500/60 text-emerald-200'
-        : type === 'warning'
-        ? 'bg-amber-950/95 border-amber-500/60 text-amber-200'
-        : 'bg-rose-950/95 border-rose-500/60 text-rose-200';
-      
-      toast.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-2xl text-xs sm:text-sm font-medium flex items-center gap-2.5 transform transition-all duration-300 translate-y-2 opacity-0 ${colors}`;
-      toast.innerHTML = `<span>${type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '❌'}</span><span>${message}</span>`;
-      container.appendChild(toast);
-
-      requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      });
-
-      setTimeout(() => {
-        toast.classList.add('translate-y-2', 'opacity-0');
-        setTimeout(() => toast.remove(), 300);
-      }, 3400);
-    }
-
-    // -----------------------------------------------------------------------
-    // 3. TAB NAVIGATION & GLOBAL PROGRESS
-    // -----------------------------------------------------------------------
-    function switchTab(tabId) {
-      appState.activeTab = tabId;
-      document.querySelectorAll('.lab-panel').forEach(p => p.classList.add('hidden'));
-      document.getElementById(`panel-${tabId}`).classList.remove('hidden');
-
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        if (btn.id !== 'tab-export') {
-          btn.classList.remove('tab-active');
-          btn.classList.add('text-slate-400');
-        }
-      });
-
-      const activeBtn = document.getElementById(`tab-${tabId}`);
-      if (activeBtn && tabId !== 'export') {
-        activeBtn.classList.add('tab-active');
-        activeBtn.classList.remove('text-slate-400');
-      }
-
-      if (tabId === 'export') {
-        generateMarkdown();
-      }
-      saveState();
-    }
-
-    function updateGlobalUI() {
-      const doneCount = Object.values(appState.completed).filter(Boolean).length;
-      document.getElementById('progress-text').textContent = `${doneCount}/4`;
-      document.getElementById('progress-bar').style.width = `${(doneCount / 4) * 100}%`;
-
-      ['lab1', 'lab2', 'lab3', 'lab4'].forEach(lab => {
-        const badge = document.getElementById(`badge-${lab}`);
-        if (badge) {
-          badge.className = appState.completed[lab]
-            ? 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]'
-            : 'w-2 h-2 rounded-full bg-slate-600';
-        }
-      });
-    }
-
-    function resetAllProgress() {
-      localStorage.removeItem(STORAGE_KEY);
-      location.reload();
-    }
-
-    // -----------------------------------------------------------------------
-    // 4. LAB 1 RENDER & VALIDATION
-    // -----------------------------------------------------------------------
-    function renderLab1() {
-      const container = document.getElementById('lab1-scenarios-container');
-      container.innerHTML = lab1Scenarios.map(sc => {
-        const savedAns = appState.lab1.answers[sc.id] || {};
-        return `
-          <div class="bg-slate-900/90 border border-slate-700/90 rounded-2xl p-5 flex flex-col justify-between space-y-4">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-2">
-                <h3 class="font-bold text-white text-sm sm:text-base">${sc.title}</h3>
-                <span id="status-${sc.id}" class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">Pendiente</span>
-              </div>
-              <p class="text-xs sm:text-sm text-slate-300 bg-slate-800/60 p-3 rounded-xl border border-slate-700/60 leading-relaxed">${sc.desc}</p>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-xs">
-                <div>
-                  <label class="block text-slate-400 font-semibold mb-1">1. Activo afectado</label>
-                  <select id="${sc.id}-asset" onchange="recordLab1Select('${sc.id}', 'asset', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white outline-none focus:border-cyan-500">
-                    <option value="">-- Seleccionar activo --</option>
-                    ${lab1Options.asset.map(o => `<option value="${o}" ${savedAns.asset === o ? 'selected' : ''}>${o}</option>`).join('')}
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-slate-400 font-semibold mb-1">2. Pilar CID vulnerado</label>
-                  <select id="${sc.id}-cia" onchange="recordLab1Select('${sc.id}', 'cia', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white outline-none focus:border-cyan-500">
-                    <option value="">-- Seleccionar pilar --</option>
-                    ${lab1Options.cia.map(o => `<option value="${o}" ${savedAns.cia === o ? 'selected' : ''}>${o}</option>`).join('')}
-                  </select>
-                </div>
-
-                <div class="sm:col-span-2">
-                  <label class="block text-slate-400 font-semibold mb-1">3. Vulnerabilidad principal</label>
-                  <select id="${sc.id}-vuln" onchange="recordLab1Select('${sc.id}', 'vuln', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white outline-none focus:border-cyan-500">
-                    <option value="">-- Seleccionar vulnerabilidad --</option>
-                    ${lab1Options.vuln.map(o => `<option value="${o}" ${savedAns.vuln === o ? 'selected' : ''}>${o}</option>`).join('')}
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-slate-400 font-semibold mb-1">4. Amenaza materializada</label>
-                  <select id="${sc.id}-threat" onchange="recordLab1Select('${sc.id}', 'threat', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white outline-none focus:border-cyan-500">
-                    <option value="">-- Seleccionar amenaza --</option>
-                    ${lab1Options.threat.map(o => `<option value="${o}" ${savedAns.threat === o ? 'selected' : ''}>${o}</option>`).join('')}
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-slate-400 font-semibold mb-1">5. Tipo de Control</label>
-                  <select id="${sc.id}-control" onchange="recordLab1Select('${sc.id}', 'control', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white outline-none focus:border-cyan-500">
-                    <option value="">-- Seleccionar control --</option>
-                    ${lab1Options.control.map(o => `<option value="${o}" ${savedAns.control === o ? 'selected' : ''}>${o}</option>`).join('')}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div id="fb-${sc.id}" class="hidden text-xs p-3 rounded-xl border"></div>
-          </div>
-        `;
-      }).join('');
-
-      document.getElementById('lab1-score-display').textContent = `${appState.lab1.score} / 20`;
-    }
-
-    function recordLab1Select(scId, field, value) {
-      if (!appState.lab1.answers[scId]) appState.lab1.answers[scId] = {};
-      appState.lab1.answers[scId][field] = value;
-      saveState();
-    }
-
-    function validateLab1() {
-      let totalCorrect = 0;
-      let allAnswered = true;
-
-      lab1Scenarios.forEach(sc => {
-        const fields = ['asset', 'cia', 'vuln', 'threat', 'control'];
-        let scScore = 0;
-
-        fields.forEach(f => {
-          const el = document.getElementById(`${sc.id}-${f}`);
-          const val = el.value;
-          if (!val) allAnswered = false;
-          if (val === sc.correct[f]) {
-            scScore++;
-            totalCorrect++;
-            el.classList.remove('border-rose-500');
-            el.classList.add('border-emerald-500');
-          } else {
-            el.classList.remove('border-emerald-500');
-            el.classList.add('border-rose-500');
-          }
-        });
-
-        const statusBadge = document.getElementById(`status-${sc.id}`);
-        const fbBox = document.getElementById(`fb-${sc.id}`);
-        fbBox.classList.remove('hidden');
-
-        if (scScore === 5) {
-          statusBadge.textContent = '5/5 CORRECTO';
-          statusBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
-          fbBox.className = 'text-xs p-3 rounded-xl border bg-emerald-950/30 border-emerald-500/30 text-emerald-200';
-          fbBox.innerHTML = `<strong>¡Diagnóstico exacto!</strong> ${sc.explanation}`;
-        } else {
-          statusBadge.textContent = `${scScore}/5 ACIERTOS`;
-          statusBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30';
-          fbBox.className = 'text-xs p-3 rounded-xl border bg-amber-950/30 border-amber-500/30 text-amber-200';
-          fbBox.innerHTML = `<strong>Revisa los campos en rojo (${scScore}/5):</strong> ${sc.explanation}`;
-        }
-      });
-
-      appState.lab1.score = totalCorrect;
-      document.getElementById('lab1-score-display').textContent = `${totalCorrect} / 20`;
-
-      if (totalCorrect >= 16) {
-        appState.completed.lab1 = true;
-        showToast(`¡LAB 1 completado con ${totalCorrect}/20 aciertos! Registrado en tu portfolio.`);
-      } else {
-        showToast(`Has obtenido ${totalCorrect}/20. Consigue al menos 16 aciertos para completar el LAB 1.`, 'warning');
-      }
-      saveState();
-    }
-
-    // -----------------------------------------------------------------------
-    // 5. LAB 2: ENTROPY CALCULATOR & IDENTITY POLICY
-    // -----------------------------------------------------------------------
-    function setTestPwd(val) {
-      const input = document.getElementById('pwd-input');
-      input.value = val;
-      analyzePassword();
-    }
-
-    function analyzePassword() {
-      const pwd = document.getElementById('pwd-input').value;
-      const len = pwd.length;
-      document.getElementById('pwd-length').textContent = `${len} car.`;
-
-      if (len === 0) {
-        document.getElementById('pwd-entropy').textContent = '0 bits';
-        document.getElementById('pwd-rating').textContent = '—';
-        document.getElementById('pwd-rating').className = 'text-sm font-mono font-bold text-slate-400 mt-1';
-        document.getElementById('pwd-cracktime').textContent = 'Introduce una clave para calcular';
-        return;
-      }
-
-      // Pool size calculation
-      let pool = 0;
-      if (/[a-z]/.test(pwd)) pool += 26;
-      if (/[A-Z]/.test(pwd)) pool += 26;
-      if (/[0-9]/.test(pwd)) pool += 10;
-      if (/[^a-zA-Z0-9]/.test(pwd)) pool += 32;
-
-      // Penalize common predictable patterns
-      const hasPredictable = /(1234|admin|password|qwerty|2024|2025|2026|empresa|logistica)/i.test(pwd);
-      let entropy = Math.round(len * Math.log2(Math.max(pool, 1)));
-      if (hasPredictable) entropy = Math.max(12, Math.round(entropy * 0.45));
-
-      document.getElementById('pwd-entropy').textContent = `${entropy} bits`;
-
-      // Rating & Crack time (assuming 10^10 guesses/sec offline GPU array)
-      const guesses = Math.pow(2, entropy);
-      const seconds = guesses / 1e10;
-
-      let crackText = '';
-      let ratingText = '';
-      let ratingColor = '';
-
-      if (seconds < 1) {
-        crackText = 'Instantáneo (< 1 segundo)';
-        ratingText = 'CRÍTICA';
-        ratingColor = 'text-rose-400';
-      } else if (seconds < 3600) {
-        crackText = `${Math.round(seconds / 60)} minutos`;
-        ratingText = 'DÉBIL';
-        ratingColor = 'text-rose-400';
-      } else if (seconds < 86400 * 30) {
-        crackText = `${Math.round(seconds / 3600)} horas`;
-        ratingText = 'MEJORABLE';
-        ratingColor = 'text-amber-400';
-      } else if (seconds < 86400 * 365 * 100) {
-        crackText = `${Math.round(seconds / (86400 * 365))} años`;
-        ratingText = 'ROBUSTA';
-        ratingColor = 'text-cyan-400';
-      } else {
-        crackText = 'Siglos / Computacionalmente inviable';
-        ratingText = 'BLINDADA';
-        ratingColor = 'text-emerald-400';
-      }
-
-      document.getElementById('pwd-cracktime').textContent = crackText;
-      const ratingEl = document.getElementById('pwd-rating');
-      ratingEl.textContent = ratingText;
-      ratingEl.className = `text-sm font-mono font-bold mt-1 ${ratingColor}`;
-
-      // Update NIST checks
-      updateCheckItem('nist-len', len >= 14, 'Longitud recomendada (≥ 14 caracteres / passphrase)');
-      updateCheckItem('nist-dict', !hasPredictable, 'Sin patrones predecibles (años, "admin", secuencias)');
-      updateCheckItem('nist-entropy', entropy >= 65, 'Entropía robusta (≥ 65 bits frente a fuerza bruta)');
-    }
-
-    function updateCheckItem(elId, passed, label) {
-      const el = document.getElementById(elId);
-      el.className = passed ? 'flex items-center gap-2 text-emerald-400 font-medium' : 'flex items-center gap-2 text-slate-400';
-      el.innerHTML = `<span class="font-mono">${passed ? '[✓]' : '[ ]'}</span> ${label}`;
-    }
-
-    function initLab2() {
-      document.getElementById('pol-minlen').value = appState.lab2.minLen;
-      document.getElementById('pol-mfa').value = appState.lab2.mfa;
-      document.getElementById('pol-rotation').value = appState.lab2.rotation;
-      document.getElementById('pol-lockout').value = appState.lab2.lockout;
-      document.getElementById('pol-noadmin').checked = appState.lab2.noAdmin;
-      document.getElementById('pol-pwdmgr').checked = appState.lab2.pwdMgr;
-      document.getElementById('pol-offboarding').checked = appState.lab2.offboarding;
-    }
-
-    function saveLab2() {
-      appState.lab2 = {
-        minLen: document.getElementById('pol-minlen').value,
-        mfa: document.getElementById('pol-mfa').value,
-        rotation: document.getElementById('pol-rotation').value,
-        lockout: document.getElementById('pol-lockout').value,
-        noAdmin: document.getElementById('pol-noadmin').checked,
-        pwdMgr: document.getElementById('pol-pwdmgr').checked,
-        offboarding: document.getElementById('pol-offboarding').checked
-      };
-
-      const fb = document.getElementById('lab2-feedback');
-      if (appState.lab2.mfa === 'sms' || appState.lab2.minLen === '8' || !appState.lab2.noAdmin) {
-        fb.innerHTML = '<span class="text-amber-400 font-semibold">⚠️ Advertencia SOC:</span> Evita SMS como MFA principal, claves de 8 caracteres o usuarios trabajando como Administrador.';
-        showToast('Revisa las recomendaciones NIST/Zero Trust antes de cerrar LAB 2.', 'warning');
-      } else {
-        appState.completed.lab2 = true;
-        fb.innerHTML = '<span class="text-emerald-400 font-semibold">✅ Política alineada con Zero Trust y NIST 800-63B.</span>';
-        showToast('¡LAB 2 guardado! Política de Identidad añadida a tu portfolio.');
-      }
-      saveState();
-    }
-
-    // -----------------------------------------------------------------------
-    // 6. LAB 3: BACKUPS 3-2-1-1-0 & HARDENING CHECKLIST
-    // -----------------------------------------------------------------------
-    function renderLab3() {
-      // Restore backup checkboxes
-      document.getElementById('bk-3').checked = appState.lab3.backups.bk3;
-      document.getElementById('bk-2').checked = appState.lab3.backups.bk2;
-      document.getElementById('bk-1offsite').checked = appState.lab3.backups.bk1offsite;
-      document.getElementById('bk-1airgap').checked = appState.lab3.backups.bk1airgap;
-      document.getElementById('bk-0err').checked = appState.lab3.backups.bk0err;
-
-      const grid = document.getElementById('hardening-grid');
-      grid.innerHTML = hardeningCategories.map(cat => `
-        <div class="bg-slate-900/90 border border-slate-700 rounded-2xl p-4 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-800">
-              <h4 class="font-bold text-white text-xs sm:text-sm">${cat.title}</h4>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-400 border border-slate-700 shrink-0">${cat.badge}</span>
-            </div>
-            <div class="space-y-2.5">
-              ${cat.items.map(item => `
-                <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition">
-                  <input type="checkbox" id="${item.id}" onchange="toggleHardening('${item.id}', this.checked)" ${appState.lab3.hardening[item.id] ? 'checked' : ''} class="mt-0.5 rounded bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-500" />
-                  <span class="text-xs text-slate-300 leading-snug">${item.text}</span>
-                </label>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      updateHardeningCounter();
-    }
-
-    function simulateRansomware() {
-      const b3 = document.getElementById('bk-3').checked;
-      const b2 = document.getElementById('bk-2').checked;
-      const bOff = document.getElementById('bk-1offsite').checked;
-      const bAir = document.getElementById('bk-1airgap').checked;
-      const b0 = document.getElementById('bk-0err').checked;
-
-      appState.lab3.backups = { bk3: b3, bk2: b2, bk1offsite: bOff, bk1airgap: bAir, bk0err: b0 };
-      appState.lab3.ransomwareTested = true;
-
-      const resBox = document.getElementById('ransomware-result');
-      resBox.classList.remove('hidden');
-
-      if (!bAir) {
-        resBox.className = 'mt-4 rounded-xl p-4 border text-xs sm:text-sm bg-rose-950/40 border-rose-500/50 text-rose-200';
-        resBox.innerHTML = `<strong>🚨 DESASTRE OPERATIVO (Cifrado propagado):</strong> Aunque tenías copias en red o en la nube sincronizada, al <strong>no existir aislamiento (Air-Gap) ni inmutabilidad</strong>, el ransomware ha cifrado tanto los servidores como las copias de seguridad conectadas por SMB/red.`;
-      } else if (!b0 || !b3 || !b2 || !bOff) {
-        resBox.className = 'mt-4 rounded-xl p-4 border text-xs sm:text-sm bg-amber-950/40 border-amber-500/50 text-amber-200';
-        resBox.innerHTML = `<strong>⚠️ RECUPERACIÓN PARCIAL CON RIESGO:</strong> Tu copia aislada ha sobrevivido al cifrado, pero al faltar alguno de los pilares de la regla <strong>3-2-1-1-0</strong> (como las pruebas de restauración sin errores), la recuperación podría fallar o sufrir pérdida parcial de datos.`;
-      } else {
-        resBox.className = 'mt-4 rounded-xl p-4 border text-xs sm:text-sm bg-emerald-950/40 border-emerald-500/50 text-emerald-200';
-        resBox.innerHTML = `<strong>🛡️ RESILIENCIA TOTAL VERIFICADA (Regla 3-2-1-1-0):</strong> El ransomware cifró los equipos en producción, pero gracias a tu copia <strong>aislada/inmutable y verificada con 0 errores</strong>, la empresa restaura toda su operativa en horas sin pagar un euro de rescate.`;
-      }
-      saveState();
-    }
-
-    function toggleHardening(id, checked) {
-      appState.lab3.hardening[id] = checked;
-      updateHardeningCounter();
-      saveState();
-    }
-
-    function updateHardeningCounter() {
-      const totalChecked = Object.values(appState.lab3.hardening).filter(Boolean).length;
-      document.getElementById('hardening-counter').textContent = `${totalChecked} / 12 controles marcados`;
-    }
-
-    function saveLab3() {
-      const totalChecked = Object.values(appState.lab3.hardening).filter(Boolean).length;
-      if (!appState.lab3.ransomwareTested) {
-        showToast('Ejecuta primero el botón "Simular Ataque Ransomware".', 'warning');
-        return;
-      }
-      if (totalChecked < 9) {
-        showToast(`Has marcado ${totalChecked}/12 controles. Selecciona al menos 9 medidas CCN-CERT.`, 'warning');
-        return;
-      }
-      appState.completed.lab3 = true;
-      showToast('¡LAB 3 completado! Arquitectura 3-2-1 y Bastionado guardados.');
-      saveState();
-    }
-
-    // -----------------------------------------------------------------------
-    // 7. LAB 4: AUDITORÍA TRANSPORTE Y LOGÍSTICA SUR S.L.
-    // -----------------------------------------------------------------------
-    function getRiskBadge(score) {
-      if (score <= 4) return { label: 'BAJO', cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
-      if (score <= 9) return { label: 'MEDIO', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
-      if (score <= 16) return { label: 'ALTO', cls: 'bg-orange-500/20 text-orange-300 border-orange-500/40' };
-      return { label: 'CRÍTICO', cls: 'bg-rose-500/20 text-rose-300 border-rose-500/40' };
-    }
-
-    function renderLab4() {
-      const container = document.getElementById('lab4-assets-container');
-      container.innerHTML = lab4Assets.map(asset => {
-        const st = appState.lab4[asset.code];
-        const riskScore = st.prob * st.imp;
-        const badge = getRiskBadge(riskScore);
-
-        return `
-          <div class="bg-slate-900/90 border border-slate-700 rounded-2xl p-5 space-y-4">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs border border-cyan-500/30">ACTIVO ${asset.code}</span>
-                  <h3 class="font-bold text-white text-base">${asset.name}</h3>
-                </div>
-                <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${asset.situation}</p>
-              </div>
-
-              <!-- Calculated Risk Pill -->
-              <div class="flex items-center gap-3 bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-800 shrink-0">
-                <div class="text-right">
-                  <div class="text-[10px] font-mono text-slate-400">RIESGO INTRÍNSECO (P×I)</div>
-                  <div id="risk-val-${asset.code}" class="text-lg font-mono font-bold text-white">${riskScore} / 25</div>
-                </div>
-                <span id="risk-badge-${asset.code}" class="px-2.5 py-1 rounded-lg font-mono font-bold text-xs border ${badge.cls}">${badge.label}</span>
-              </div>
-            </div>
-
-            <!-- Threat, Prob & Impact Controls -->
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs">
-              <div class="md:col-span-6">
-                <label class="block text-slate-400 font-semibold mb-1">Amenaza Principal (Cruce en Excel)</label>
-                <select onchange="updateLab4Field('${asset.code}', 'threat', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white outline-none focus:border-cyan-500">
-                  ${asset.threats.map(t => `<option value="${t}" ${st.threat === t ? 'selected' : ''}>${t}</option>`).join('')}
-                </select>
-              </div>
-
-              <div class="md:col-span-3">
-                <label class="block text-slate-400 font-semibold mb-1">Probabilidad (1 a 5)</label>
-                <select onchange="updateLab4Field('${asset.code}', 'prob', Number(this.value))" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-mono outline-none focus:border-cyan-500">
-                  ${[1,2,3,4,5].map(n => `<option value="${n}" ${st.prob === n ? 'selected' : ''}>${n} - ${['Muy Baja','Baja','Media','Alta','Muy Alta'][n-1]}</option>`).join('')}
-                </select>
-              </div>
-
-              <div class="md:col-span-3">
-                <label class="block text-slate-400 font-semibold mb-1">Impacto (1 a 5)</label>
-                <select onchange="updateLab4Field('${asset.code}', 'imp', Number(this.value))" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-mono outline-none focus:border-cyan-500">
-                  ${[1,2,3,4,5].map(n => `<option value="${n}" ${st.imp === n ? 'selected' : ''}>${n} - ${['Muy Bajo','Bajo','Medio','Alto','Crítico'][n-1]}</option>`).join('')}
-                </select>
-              </div>
-            </div>
-
-            <!-- Technical & Organizational Safeguards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="text-cyan-300 font-semibold">Salvaguarda Técnica (Configuración / Herramienta)</label>
-                  <button type="button" onclick="fillLab4Hint('${asset.code}', 'tech')" class="text-[11px] font-mono text-slate-400 hover:text-cyan-400 underline">Ver ejemplo guía</button>
-                </div>
-                <textarea id="lab4-tech-${asset.code}" oninput="updateLab4Text('${asset.code}', 'tech', this.value)" rows="2" placeholder="Ej. Activar BitLocker, migrar cuentas a usuario Estándar y aislar backups..." 
-                  class="w-full bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-xl p-3 text-white placeholder-slate-500 outline-none">${st.tech}</textarea>
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="text-blue-300 font-semibold">Salvaguarda Organizativa (Norma / Procedimiento)</label>
-                  <button type="button" onclick="fillLab4Hint('${asset.code}', 'org')" class="text-[11px] font-mono text-slate-400 hover:text-blue-400 underline">Ver ejemplo guía</button>
-                </div>
-                <textarea id="lab4-org-${asset.code}" oninput="updateLab4Text('${asset.code}', 'org', this.value)" rows="2" placeholder="Ej. Protocolo obligatorio de actualización mensual y normativa de uso..." 
-                  class="w-full bg-slate-800 border border-slate-700 focus:border-blue-500 rounded-xl p-3 text-white placeholder-slate-500 outline-none">${st.org}</textarea>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function updateLab4Field(code, field, value) {
-      appState.lab4[code][field] = value;
-      const st = appState.lab4[code];
-      const riskScore = st.prob * st.imp;
-      const badge = getRiskBadge(riskScore);
-
-      document.getElementById(`risk-val-${code}`).textContent = `${riskScore} / 25`;
-      const badgeEl = document.getElementById(`risk-badge-${code}`);
-      badgeEl.textContent = badge.label;
-      badgeEl.className = `px-2.5 py-1 rounded-lg font-mono font-bold text-xs border ${badge.cls}`;
-      saveState();
-    }
-
-    function updateLab4Text(code, type, value) {
-      appState.lab4[code][type] = value;
-      saveState();
-    }
-
-    function fillLab4Hint(code, type) {
-      const asset = lab4Assets.find(a => a.code === code);
-      const val = type === 'tech' ? asset.helpTech : asset.helpOrg;
-      document.getElementById(`lab4-${type}-${code}`).value = val;
-      appState.lab4[code][type] = val;
-      saveState();
-      showToast(`Ejemplo de salvaguarda ${type === 'tech' ? 'técnica' : 'organizativa'} cargado para ${code}. Personalízalo a tu estilo.`);
-    }
-
-    function saveLab4() {
-      const missing = ['A1', 'A2', 'A3'].some(code => {
-        return appState.lab4[code].tech.trim().length < 10 || appState.lab4[code].org.trim().length < 10;
-      });
-
-      if (missing) {
-        showToast('Redacta tanto la salvaguarda técnica como la organizativa en A1, A2 y A3.', 'warning');
-        return;
-      }
-
-      appState.completed.lab4 = true;
-      showToast('¡Auditoría completada! Tu Portfolio GitHub está listo para exportar.');
-      saveState();
-      switchTab('export');
-    }
-
-    // -----------------------------------------------------------------------
-    // 8. GITHUB PORTFOLIO MARKDOWN GENERATOR & EXPORT
-    // -----------------------------------------------------------------------
-    function generateMarkdown() {
-      const name = appState.studentName.trim() || '[Nombre y Apellidos del Analista]';
-      const links = appState.studentLinks.trim() || 'https://github.com/tu-usuario | https://linkedin.com/in/tu-perfil';
-      const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-      const doneCount = Object.values(appState.completed).filter(Boolean).length;
-
-      const mfaMap = {
-        sms: 'SMS OTP (Requiere migración a TOTP/FIDO2)',
-        totp: 'App Autenticadora TOTP / Aprobación Push Numérica',
-        fido2: 'Llaves criptográficas FIDO2 / Passkeys (Resistente a Phishing)'
-      };
-
-      const hardeningSelected = [];
-      hardeningCategories.forEach(cat => {
-        cat.items.forEach(item => {
-          if (appState.lab3.hardening[item.id]) {
-            hardeningSelected.push(`- [x] **[${cat.badge}]** ${item.text}`);
-          }
-        });
-      });
-
-      const md = `# 🛡️ Portfolio de Ciberseguridad Blue Team & SOC Nivel 1
-**Especialidad:** INF-105 – Protección de la Infraestructura Digital  
-**Analista Junior:** ${name}  
-**Contacto / Perfiles:** ${links}  
-**Fecha de auditoría:** ${dateStr}  
-
-![Estado](https://img.shields.io/badge/Laboratorios_Completados-${doneCount}%2F4-10b981?style=for-the-badge)
-![Marco](https://img.shields.io/badge/Estándares-CCN--CERT_%7C_NIST_%7C_MAGERIT-06b6d4?style=for-the-badge)
-![Rol](https://img.shields.io/badge/Perfil-Analista_SOC_Nivel_1_%2F_Soporte_IT-3b82f6?style=for-the-badge)
-
----
-
-## 📌 Resumen Ejecutivo de Competencias Demostradas
-Este repositorio recoge las evidencias técnicas, políticas corporativas y matrices de análisis de riesgos desarrolladas durante el entrenamiento práctico de infraestructura segura:
-1. **Análisis de Riesgos y Tríada CID:** Identificación de activos, vulnerabilidades, amenazas y clasificación de controles (Preventivos, Detectivos y Correctivos) bajo metodología MAGERIT.
-2. **Gestión de Identidad y Acceso (IAM / Zero Trust):** Diseño de políticas de credenciales basadas en entropía (NIST SP 800-63B), autenticación multifactor (MFA) y principio de mínimo privilegio.
-3. **Resiliencia y Bastionado (Hardening):** Implementación de arquitectura de copias de seguridad **3-2-1-1-0** anti-ransomware y controles técnicos basados en guías **CCN-CERT**.
-4. **Auditoría Inicial de Pyme:** Evaluación completa de riesgos y plan de remediación técnica/organizativa para *Transporte y Logística Sur S.L.*.
-
----
-
-## 🔐 1. Política de Identidad, Autenticación y Mínimo Privilegio (Pyme 40 empleados)
-* **Longitud y Complejidad (NIST 800-63B):** Mínimo **${appState.lab2.minLen} caracteres** o uso de *passphrases* de 4 palabras aleatorias.
-* **Segundo Factor de Autenticación (MFA):** ${mfaMap[appState.lab2.mfa]}.
-* **Rotación de Credenciales:** ${appState.lab2.rotation === 'breach' ? 'Sin caducidad periódica arbitraria; cambio inmediato ante compromiso o alerta.' : 'Rotación cada 30 días.'}
-* **Protección contra Fuerza Bruta:** ${appState.lab2.lockout === '5att' ? 'Bloqueo temporal tras 5 intentos fallidos + generación de alerta.' : 'Monitorización básica.'}
-* **Controles Zero Trust & Mínimo Privilegio:**
-  * ${appState.lab2.noAdmin ? '✅' : '⬜'} Separación estricta de cuentas: Prohibición de uso diario como Administrador Local en Windows.
-  * ${appState.lab2.pwdMgr ? '✅' : '⬜'} Uso de Gestor de Contraseñas Corporativo y bloqueo de credenciales filtradas.
-  * ${appState.lab2.offboarding ? '✅' : '⬜'} Protocolo de *Offboarding* (revocación de accesos y tokens en < 1 hora tras baja).
-
----
-
-## 🛠️ 2. Resiliencia Anti-Ransomware (Regla 3-2-1-1-0) y Bastionado CCN-CERT
-### Arquitectura de Respaldo Verificada
-* **3 Copias de datos:** ${appState.lab3.backups.bk3 ? 'Activado' : 'Pendiente'}
-* **2 Soportes distintos:** ${appState.lab3.backups.bk2 ? 'Activado' : 'Pendiente'}
-* **1 Copia externa (Off-site):** ${appState.lab3.backups.bk1offsite ? 'Activado' : 'Pendiente'}
-* **1 Copia aislada / inmutable (Air-Gap):** ${appState.lab3.backups.bk1airgap ? 'Activado' : 'Pendiente'}
-* **0 Errores (Pruebas de restauración):** ${appState.lab3.backups.bk0err ? 'Activado' : 'Pendiente'}
-
-### Controles Técnicos de Bastionado Aplicados (${hardeningSelected.length}/12)
-${hardeningSelected.length > 0 ? hardeningSelected.join('\n') : '- *(Pendiente de seleccionar controles en el Laboratorio 3)*'}
-
----
-
-## 📊 3. Caso Práctico: Auditoría Inicial "Transporte y Logística Sur S.L."
-Evaluación de riesgos realizada sobre la infraestructura de 38 empleados (previa a la carga en plantilla \`Analisis-Riesgos-ModeloA.xlsx\`):
-
-| Código | Activo Crítico | Amenaza Identificada | Prob. | Imp. | Riesgo (P×I) | Salvaguarda Técnica Propuesta | Salvaguarda Organizativa Propuesta |
-| :--- | :--- | :--- | :---: | :---: | :---: | :--- | :--- |
-${['A1', 'A2', 'A3'].map(code => {
-  const assetMeta = lab4Assets.find(a => a.code === code);
-  const st = appState.lab4[code];
-  const score = st.prob * st.imp;
-  const lvl = getRiskBadge(score).label;
-  const techClean = (st.tech || 'Pendiente de redactar').replace(/\|/g, '-').replace(/\n/g, ' ');
-  const orgClean = (st.org || 'Pendiente de redactar').replace(/\|/g, '-').replace(/\n/g, ' ');
-  return `| **${code}** | ${assetMeta.name} | ${st.threat} | ${st.prob}/5 | ${st.imp}/5 | **${score}/25 (${lvl})** | ${techClean} | ${orgClean} |`;
-}).join('\n')}
-
----
-
-> *Laboratorio y evidencias estructuradas dentro del programa formativo INF-105 (Material didáctico diseñado por Yolanda Seisdedos Chapí – Especialista en Educación Digital Docente de FPE & Innovación TIC).*`;
-
-      const textarea = document.getElementById('markdown-output');
-      if (textarea) {
-        textarea.value = md;
-        document.getElementById('md-char-count').textContent = `${md.length} caracteres`;
-      }
-      return md;
-    }
-
-    function copyMarkdown() {
-      const textarea = document.getElementById('markdown-output');
-      textarea.select();
-      textarea.setSelectionRange(0, 99999);
-      try {
-        document.execCommand('copy');
-        showToast('¡Código Markdown copiado al portapapeles! Pégalo en tu README.md de GitHub.');
-      } catch (err) {
-        showToast('No se pudo copiar automáticamente. Selecciona el texto y pulsa Ctrl+C.', 'error');
-      }
-    }
-
-    function downloadFile(filename, content, mimeType) {
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    function downloadReadme() {
-      const md = generateMarkdown();
-      downloadFile('README.md', md, 'text/markdown;charset=utf-8');
-      showToast('Archivo README.md descargado correctamente.');
-    }
-
-    function downloadRepoGuide() {
-      const name = appState.studentName.trim() || 'Alumno_INF105';
-      const guide = `================================================================================
-GUÍA PASO A PASO: CÓMO PUBLICAR TU PORTFOLIO DE CIBERSEGURIDAD EN GITHUB
-Alumno: ${name}
-Módulo: INF-105 – Protección de la Infraestructura Digital
-================================================================================
-
-1. CREAR EL REPOSITORIO EN GITHUB
-   - Entra en https://github.com e inicia sesión (o crea una cuenta profesional con tu nombre).
-   - Haz clic en el botón "+" (arriba a la derecha) -> "New repository".
-   - Nombre recomendado: ciberseguridad-portfolio-inf105
-   - Descripción: Portfolio práctico de Auditoría de Riesgos, Identidad Zero Trust y Hardening (CCN-CERT / MAGERIT).
-   - Marca la casilla "Public" (para que las empresas y reclutadores puedan verlo).
-   - Haz clic en "Create repository".
-
-2. SUBIR TU PORTADA TÉCNICA (README.md)
-   - En tu nuevo repositorio, haz clic en "uploading an existing file" o "Add file -> Upload files".
-   - Arrastra el archivo "README.md" que acabas de descargar desde CyberLab.
-   - Escribe un mensaje de commit profesional: "feat: add initial security audit and hardening portfolio"
-   - Pulsa "Commit changes". ¡Tu página principal ya se verá formateada con tablas e insignias!
-
-3. SUBIR TU EXCEL DE AUDITORÍA ("TRANSPORTE Y LOGÍSTICA SUR S.L.")
-   - Haz clic en "Add file -> Create new file".
-   - En el cuadro de nombre escribe: 01-auditoria-riesgos-pyme/notas.txt (esto crea la carpeta automáticamente).
-   - O sube directamente tu archivo Excel renombrado como:
-     Apellido1_Apellido2_Auditoria_Riesgos_2026.xlsx
-
-4. AÑADIR EL ENLACE A TU CV Y LINKEDIN
-   - Copia la URL de tu repositorio (ej. https://github.com/tu-usuario/ciberseguridad-portfolio-inf105).
-   - Añádelo en la sección "Proyectos" o "Destacados" de tu perfil de LinkedIn y en la cabecera de tu currículum para puestos de Analista SOC Nivel 1 o Soporte IT.
-================================================================================`;
-      downloadFile('Guia_Portfolio_GitHub_INF105.txt', guide, 'text/plain;charset=utf-8');
-      showToast('Guía de estructura de repositorio descargada (.txt).');
-    }
-
-    // -----------------------------------------------------------------------
-    // 9. INITIALIZATION
-    // -----------------------------------------------------------------------
-    window.addEventListener('DOMContentLoaded', () => {
-      loadState();
-
-      // Bind header student inputs
-      const nameInput = document.getElementById('student-name');
-      const linksInput = document.getElementById('student-links');
-      nameInput.value = appState.studentName;
-      linksInput.value = appState.studentLinks;
-
-      nameInput.addEventListener('input', (e) => {
-        appState.studentName = e.target.value;
-        saveState();
-      });
-
-      linksInput.addEventListener('input', (e) => {
-        appState.studentLinks = e.target.value;
-        saveState();
-      });
-
-      // Render all modules
-      renderLab1();
-      initLab2();
-      renderLab3();
-      renderLab4();
-      updateGlobalUI();
-      generateMarkdown();
-
-      // Restore active tab
-      switchTab(appState.activeTab || 'lab1');
-    });
-  </script>
-</body>
-</html>
+                <h3>Código PowerShell (.ps1):</h3>
+                <div class="code-box">
